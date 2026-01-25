@@ -1,8 +1,16 @@
 "use client";
 
 import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { generateCoverLetter } from '@/lib/llm';
 import { downloadPDF } from '@/lib/pdf';
+
+// Dynamically import ReactQuill to avoid SSR issues
+const ReactQuill = dynamic(() => import('react-quill-new'), {
+    ssr: false,
+    loading: () => <div className="textarea" style={{ minHeight: '500px' }}>Loading editor...</div>
+});
+import 'react-quill-new/dist/quill.snow.css';
 
 export default function CoverLetterForm() {
     const [formData, setFormData] = useState({
@@ -33,7 +41,9 @@ export default function CoverLetterForm() {
         setError('');
         try {
             const text = await generateCoverLetter(formData);
-            setResult(text);
+            // Convert plain text to basic HTML for the editor
+            const htmlText = text.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>');
+            setResult(`<p>${htmlText}</p>`);
         } catch (err: any) {
             setError(err.message || 'Something went wrong.');
         } finally {
@@ -41,18 +51,42 @@ export default function CoverLetterForm() {
         }
     };
 
+    const handleManualMode = () => {
+        setResult('<p><br></p>');
+    };
+
     const handleDownload = () => {
         if (result) {
-            const fileName = `${formData.companyName.replace(/\s+/g, '_')}_Cover_Letter.pdf`;
+            const fileName = `${formData.companyName.replace(/\s+/g, '_') || 'My'}_Cover_Letter.pdf`;
             downloadPDF(result, fileName);
         }
     };
+
+    const quillModules = {
+        toolbar: [
+            [{ 'header': [1, 2, false] }],
+            ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
+            ['link'],
+            ['clean']
+        ],
+    };
+
+    const quillFormats = [
+        'header', 'bold', 'italic', 'underline', 'strike', 'blockquote',
+        'list', 'bullet', 'indent', 'link'
+    ];
 
     return (
         <div className="animate-fade-in">
             {!result ? (
                 <form onSubmit={handleGenerate} className="glass" style={{ padding: '32px', maxWidth: '800px', margin: '0 auto' }}>
-                    <h2 style={{ marginBottom: '24px', textAlign: 'center' }}>Generator Details</h2>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                        <h2>Generator Details</h2>
+                        <button type="button" onClick={handleManualMode} className="label" style={{ background: 'var(--glass-border)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', border: 'none' }}>
+                            Write Manually
+                        </button>
+                    </div>
 
                     <div className="form-group">
                         <label className="label">Ollama Model</label>
@@ -148,14 +182,14 @@ export default function CoverLetterForm() {
                     <button type="submit" className="btn-primary" style={{ width: '100%' }} disabled={loading}>
                         {loading ? (
                             <>
-                                <div style={{ width: '16px', height: '16px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                                <span className="spin-loader"></span>
                                 Generating...
                             </>
                         ) : 'Generate Cover Letter'}
                     </button>
                 </form>
             ) : (
-                <div className="glass" style={{ padding: '32px', maxWidth: '800px', margin: '0 auto' }}>
+                <div className="glass" style={{ padding: '32px', maxWidth: '1000px', margin: '0 auto' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                         <h2>Your Cover Letter</h2>
                         <div style={{ display: 'flex', gap: '12px' }}>
@@ -163,23 +197,49 @@ export default function CoverLetterForm() {
                             <button onClick={handleDownload} className="btn-primary">Download PDF</button>
                         </div>
                     </div>
-                    <div className="form-group" style={{ position: 'relative' }}>
-                        <label className="label" style={{ position: 'absolute', top: '-10px', right: '10px', background: 'var(--background)', padding: '0 8px', fontSize: '0.7rem', color: 'var(--text-muted)' }}>Editable</label>
-                        <textarea
-                            className="textarea"
-                            style={{ whiteSpace: 'pre-wrap', minHeight: '500px', width: '100%', backgroundColor: 'var(--background)', color: 'var(--foreground)', border: '1px solid var(--glass-border)', padding: '24px' }}
+                    <div className="quill-wrapper" style={{ background: 'white', borderRadius: '8px', minHeight: '600px', color: 'black' }}>
+                        <ReactQuill
+                            theme="snow"
                             value={result}
-                            onChange={(e) => setResult(e.target.value)}
+                            onChange={setResult}
+                            modules={quillModules}
+                            formats={quillFormats}
+                            style={{ height: '550px' }}
                         />
                     </div>
                 </div>
             )}
 
-            <style jsx>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
+            <style jsx global>{`
+                .ql-container {
+                    font-size: 16px;
+                    border-bottom-left-radius: 8px;
+                    border-bottom-right-radius: 8px;
+                    background: white;
+                    color: black;
+                }
+                .ql-toolbar {
+                    border-top-left-radius: 8px;
+                    border-top-right-radius: 8px;
+                    background: #f3f4f6;
+                }
+                .ql-editor {
+                    min-height: 500px;
+                }
+                .spin-loader {
+                    display: inline-block;
+                    width: 16px;
+                    height: 16px;
+                    border: 2px solid white;
+                    border-top-color: transparent;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                    margin-right: 8px;
+                }
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
+                }
+            `}</style>
         </div>
     );
 }
