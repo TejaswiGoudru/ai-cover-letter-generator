@@ -6,7 +6,9 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 import User from './models/User';
+import Project from './models/Project';
 import { authenticate, AuthRequest } from './middleware/auth';
+import PDFDocument from 'pdfkit';
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ai-cover-letter';
 const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_key_here';
@@ -355,6 +357,173 @@ app.post('/api/chat', authenticate as any, async (req: AuthRequest, res: Respons
         }
     } catch (error) {
         res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+/**
+ * @openapi
+ * /api/projects:
+ *   get:
+ *     summary: List user projects
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of projects
+ */
+app.get('/api/projects', authenticate as any, async (req: AuthRequest, res: Response) => {
+    try {
+        const projects = await Project.find({ userId: req.user?.id }).sort({ updatedAt: -1 });
+        res.json(projects);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch projects" });
+    }
+});
+
+/**
+ * @openapi
+ * /api/projects/{id}:
+ *   get:
+ *     summary: Get a single project
+ *     security:
+ *       - bearerAuth: []
+ */
+app.get('/api/projects/:id', authenticate as any, async (req: AuthRequest, res: Response) => {
+    try {
+        const project = await Project.findOne({ _id: req.params.id, userId: req.user?.id });
+        if (!project) return res.status(404).json({ error: "Project not found" });
+        res.json(project);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch project" });
+    }
+});
+
+/**
+ * @openapi
+ * /api/projects:
+ *   post:
+ *     summary: Create a new project
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - content
+ *     responses:
+ *       201:
+ *         description: Project created
+ */
+app.post('/api/projects', authenticate as any, async (req: AuthRequest, res: Response) => {
+    try {
+        const { title, companyName, role, jobDescription, resumeInfo, content } = req.body;
+        const project = new Project({
+            userId: req.user?.id,
+            title,
+            companyName,
+            role,
+            jobDescription,
+            resumeInfo,
+            content
+        });
+        await project.save();
+        res.status(201).json(project);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to create project" });
+    }
+});
+
+/**
+ * @openapi
+ * /api/projects/{id}:
+ *   put:
+ *     summary: Update project content
+ *     security:
+ *       - bearerAuth: []
+ */
+app.put('/api/projects/:id', authenticate as any, async (req: AuthRequest, res: Response) => {
+    try {
+        const { title, content } = req.body;
+        const project = await Project.findOneAndUpdate(
+            { _id: req.params.id, userId: req.user?.id },
+            { title, content },
+            { new: true }
+        );
+        if (!project) return res.status(404).json({ error: "Project not found" });
+        res.json(project);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to update project" });
+    }
+});
+
+/**
+ * @openapi
+ * /api/projects/{id}:
+ *   delete:
+ *     summary: Delete project
+ *     security:
+ *       - bearerAuth: []
+ */
+app.delete('/api/projects/:id', authenticate as any, async (req: AuthRequest, res: Response) => {
+    try {
+        const project = await Project.findOneAndDelete({ _id: req.params.id, userId: req.user?.id });
+        if (!project) return res.status(404).json({ error: "Project not found" });
+        res.json({ message: "Project deleted" });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to delete project" });
+    }
+});
+
+/**
+ * @openapi
+ * /api/projects/{id}/pdf:
+ *   get:
+ *     summary: Export project as PDF
+ *     security:
+ *       - bearerAuth: []
+ */
+app.get('/api/projects/:id/pdf', authenticate as any, async (req: AuthRequest, res: Response) => {
+    try {
+        const project = await Project.findOne({ _id: req.params.id, userId: req.user?.id });
+        if (!project) return res.status(404).json({ error: "Project not found" });
+
+        const doc = new PDFDocument({ margin: 50 });
+        const filename = `${project.title.replace(/\s+/g, '_')}.pdf`;
+
+        res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-type', 'application/pdf');
+
+        doc.pipe(res);
+
+        // PDF Layout
+        doc.fontSize(20).text('Cover Letter', { align: 'center' });
+        doc.moveDown();
+        doc.fontSize(12).text(`Role: ${project.role}`);
+        doc.text(`Company: ${project.companyName}`);
+        doc.text(`Date: ${new Date().toLocaleDateString()}`);
+        doc.moveDown();
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+        doc.moveDown();
+
+        // Improved HTML to Text conversion for PDF
+        const cleanContent = project.content
+            .replace(/<\/p>/gi, '\n\n')
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<[^>]*>?/gm, '');
+
+        doc.fontSize(11).text(cleanContent, {
+            align: 'left',
+            lineGap: 4
+        });
+
+        doc.end();
+    } catch (error) {
+        console.error("PDF generation error:", error);
+        res.status(500).json({ error: "Failed to generate PDF" });
     }
 });
 

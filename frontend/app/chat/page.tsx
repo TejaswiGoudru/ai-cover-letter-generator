@@ -52,6 +52,37 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const [statusMessage, setStatusMessage] = useState('');
+
+  const handleSaveToProject = async (content: string) => {
+    setStatusMessage('Saving...');
+    try {
+      const response = await fetch('http://localhost:4000/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: `Chat Export - ${new Date().toLocaleDateString()}`,
+          companyName: 'Extracted from Chat',
+          role: 'Extracted from Chat',
+          content: content.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')
+        })
+      });
+
+      if (response.ok) {
+        setStatusMessage('Saved to Projects!');
+        setTimeout(() => setStatusMessage(''), 3000);
+      } else {
+        setStatusMessage('Failed to save.');
+      }
+    } catch (err) {
+      console.error('Save to project error:', err);
+      setStatusMessage('Error saving.');
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || loading) return;
@@ -109,15 +140,31 @@ export default function ChatPage() {
       ) : (
         <div className="chat-window">
           <header className="chat-header">
-            <h1>AI Chat Assistant</h1>
-            <p>Conversational editing & generation</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h1>AI Chat Assistant</h1>
+                <p>Conversational editing & generation</p>
+              </div>
+              {statusMessage && <div className="toast-msg">{statusMessage}</div>}
+            </div>
           </header>
 
           <div className="messages-list">
             {messages.map((msg, index) => (
               <div key={index} className={`message-wrapper ${msg.role}`}>
-                <div className="message-bubble">
-                  {msg.content}
+                <div className="bubble-container">
+                  <div className="message-bubble">
+                    {msg.content}
+                  </div>
+                  {msg.role === 'assistant' && index > 0 && (
+                    <button
+                      className="save-chat-btn"
+                      onClick={() => handleSaveToProject(msg.content)}
+                      title="Save this cover letter as a project"
+                    >
+                      💾 Save as Project
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -287,6 +334,47 @@ export default function ChatPage() {
         }
         .upgrade-btn:hover { transform: translateY(-2px); background: #553c9a; }
         .loading { display: flex; justify-content: center; align-items: center; height: 100vh; color: #718096; }
+
+        .bubble-container {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+          max-width: 80%;
+        }
+        .user .bubble-container { align-items: flex-end; }
+        
+        .save-chat-btn {
+          background: #f1f5f9;
+          border: 1px solid #e2e8f0;
+          padding: 6px 12px;
+          border-radius: 6px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: #64748b;
+          cursor: pointer;
+          align-self: flex-start;
+          transition: all 0.2s;
+        }
+        .save-chat-btn:hover {
+          background: #3b82f6;
+          color: white;
+          border-color: #3b82f6;
+        }
+
+        .toast-msg {
+          background: #000;
+          color: #fff;
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-size: 0.8rem;
+          font-weight: 600;
+          animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
       `}</style>
     </div>
   );

@@ -12,7 +12,10 @@ const ReactQuill = dynamic(() => import('react-quill-new'), {
 });
 import 'react-quill-new/dist/quill.snow.css';
 
+import { useAuth } from '@/lib/AuthContext';
+
 export default function CoverLetterForm() {
+    const { token } = useAuth();
     const [formData, setFormData] = useState({
         companyName: '',
         role: '',
@@ -25,6 +28,8 @@ export default function CoverLetterForm() {
     const [availableModels, setAvailableModels] = useState<string[]>([]);
     const [result, setResult] = useState('');
     const [loading, setLoading] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [saveMessage, setSaveMessage] = useState('');
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -73,6 +78,37 @@ export default function CoverLetterForm() {
         if (result) {
             const fileName = `${formData.companyName.replace(/\s+/g, '_') || 'My'}_Cover_Letter.pdf`;
             downloadPDF(result, fileName);
+        }
+    };
+
+    const handleSaveToProject = async () => {
+        setSaving(true);
+        setSaveMessage('');
+        try {
+            const response = await fetch('http://localhost:4000/api/projects', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    title: `${formData.role} at ${formData.companyName}`,
+                    companyName: formData.companyName,
+                    role: formData.role,
+                    jobDescription: formData.jobDescription,
+                    resumeInfo: formData.resumeInfo,
+                    content: result // Storing HTML for now
+                })
+            });
+            if (response.ok) {
+                setSaveMessage('Saved to Projects!');
+            } else {
+                setSaveMessage('Failed to save.');
+            }
+        } catch (err) {
+            setSaveMessage('Error saving.');
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -218,10 +254,14 @@ export default function CoverLetterForm() {
                 </form>
             ) : (
                 <div className="glass" style={{ padding: '32px', maxWidth: '1000px', margin: '0 auto' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                         <h2>Your Cover Letter</h2>
-                        <div style={{ display: 'flex', gap: '12px' }}>
-                            <button onClick={() => setResult('')} className="label" style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>Edit Info</button>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                            {saveMessage && <span style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: '600' }}>{saveMessage}</span>}
+                            <button onClick={handleSaveToProject} disabled={saving} className="label" style={{ background: '#3b82f6', color: 'white', border: 'none', cursor: 'pointer', padding: '8px 16px', borderRadius: '6px' }}>
+                                {saving ? 'Saving...' : 'Save as Project'}
+                            </button>
+                            <button onClick={() => { setResult(''); setSaveMessage(''); }} className="label" style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>Edit Info</button>
                             <button onClick={handleDownload} className="btn-primary">Download PDF</button>
                         </div>
                     </div>
