@@ -29,13 +29,37 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <AuthProvider>
-          <div style={{ display: 'flex' }}>
+          <div className="app-container">
             <Sidebar />
-            <main style={{ flex: 1 }}>
+            <main className="main-content">
               {children}
             </main>
           </div>
         </AuthProvider>
+        <style dangerouslySetInnerHTML={{
+          __html: `
+          .app-container {
+            display: flex;
+          }
+          .main-content {
+            flex: 1;
+            transition: padding-left 0.3s ease;
+          }
+          body {
+            --sidebar-width: 250px;
+          }
+          body:has(.sidebar.collapsed) {
+            --sidebar-width: 80px;
+          }
+          .main-content {
+            padding-left: var(--sidebar-width);
+          }
+          @media (max-width: 768px) {
+            .main-content {
+              padding-left: 0;
+            }
+          }
+        `}} />
       </body>
     </html>
   );

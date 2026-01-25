@@ -21,7 +21,7 @@ export default function Home() {
   if (!token) return null;
 
   return (
-    <main style={{ minHeight: '100vh', padding: '40px 20px', marginLeft: '250px' }}>
+    <main style={{ minHeight: '100vh', padding: '40px 20px' }}>
       <header style={{ textAlign: 'center', marginBottom: '60px' }}>
         <h1 style={{ fontSize: '3rem', fontWeight: '800', marginBottom: '12px', background: 'linear-gradient(to right, #2563eb, #7c3aed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           AI Cover Letter Generator

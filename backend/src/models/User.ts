@@ -9,6 +9,18 @@ const userSchema = new mongoose.Schema({
     lastName: { type: String, default: '' },
     profileEmail: { type: String, default: '' },
     profilePicture: { type: String, default: '' }, // Store as base64 or URL
+    subscriptionLevel: {
+        type: String,
+        enum: ['standard', 'professional', 'ultimate'],
+        default: 'standard'
+    },
+    billingCycle: {
+        type: String,
+        enum: ['monthly', 'yearly'],
+        default: 'monthly'
+    },
+    trialStartDate: { type: Date, default: null },
+    isTrial: { type: Boolean, default: false },
 }, { timestamps: true });
 
 // Hash password before saving

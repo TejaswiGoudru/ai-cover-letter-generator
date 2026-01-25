@@ -94,7 +94,7 @@ app.get('/api/models', async (req: Request, res: Response) => {
  */
 app.post('/api/register', async (req: Request, res: Response) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, subscriptionLevel, billingCycle, isTrial } = req.body;
 
         if (!email || !password) {
             return res.status(400).json({ error: "Email and password are required" });
@@ -112,7 +112,14 @@ app.post('/api/register', async (req: Request, res: Response) => {
             return res.status(400).json({ error: "User already exists" });
         }
 
-        const user = new User({ email, password });
+        const user = new User({
+            email,
+            password,
+            subscriptionLevel: subscriptionLevel || 'standard',
+            billingCycle: billingCycle || 'monthly',
+            isTrial: !!isTrial,
+            trialStartDate: isTrial ? new Date() : null
+        });
         await user.save();
 
         res.status(201).json({ message: "User registered successfully" });
@@ -214,10 +221,21 @@ app.get('/api/profile', authenticate as any, async (req: AuthRequest, res: Respo
  */
 app.post('/api/profile', authenticate as any, async (req: AuthRequest, res: Response) => {
     try {
-        const { firstName, middleName, lastName, profileEmail, profilePicture } = req.body;
+        const { firstName, middleName, lastName, profileEmail, profilePicture, subscriptionLevel, billingCycle, isTrial } = req.body;
+
+        const updateData: any = { firstName, middleName, lastName, profileEmail, profilePicture };
+        if (subscriptionLevel) updateData.subscriptionLevel = subscriptionLevel;
+        if (billingCycle) updateData.billingCycle = billingCycle;
+        if (isTrial !== undefined) {
+            updateData.isTrial = isTrial;
+            if (isTrial && !updateData.trialStartDate) {
+                updateData.trialStartDate = new Date();
+            }
+        }
+
         const user = await User.findByIdAndUpdate(
             req.user?.id,
-            { firstName, middleName, lastName, profileEmail, profilePicture },
+            updateData,
             { new: true }
         ).select('-password');
 
@@ -273,6 +291,73 @@ app.post('/api/profile', authenticate as any, async (req: AuthRequest, res: Resp
  *                 content:
  *                   type: string
  */
+/**
+ * @openapi
+ * /api/chat:
+ *   post:
+ *     summary: Chat with AI for cover letter editing
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - messages
+ *             properties:
+ *               messages:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     role:
+ *                       type: string
+ *                     content:
+ *                       type: string
+ *               model:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: AI response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: object
+ */
+app.post('/api/chat', authenticate as any, async (req: AuthRequest, res: Response) => {
+    try {
+        const user = await User.findById(req.user?.id);
+        if (!user || user.subscriptionLevel !== 'ultimate') {
+            return res.status(403).json({ error: "AI Chat is an Ultimate tier feature. Please upgrade to access." });
+        }
+
+        const { messages, model } = req.body;
+
+        if (!messages || !Array.isArray(messages)) {
+            return res.status(400).json({ error: "Messages array is required" });
+        }
+
+        try {
+            const response = await ollama.chat({
+                model: model || 'llama3.2',
+                messages: messages,
+            });
+
+            res.json({ message: response.message });
+        } catch (error) {
+            console.error("Ollama Chat Error:", error);
+            res.status(500).json({ error: "Failed to process chat" });
+        }
+    } catch (error) {
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 app.post('/api/generate', async (req: Request, res: Response) => {
     const { jobDescription, resumeInfo, companyName, role, model, userName, date } = req.body;
 
