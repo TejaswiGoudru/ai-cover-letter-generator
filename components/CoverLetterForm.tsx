@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { generateCoverLetter } from '@/lib/llm';
+import { generateCoverLetter, getAvailableModels } from '@/lib/llm';
 import { downloadPDF } from '@/lib/pdf';
 
 // Dynamically import ReactQuill to avoid SSR issues
@@ -18,15 +18,29 @@ export default function CoverLetterForm() {
         role: '',
         jobDescription: '',
         resumeInfo: '',
-        model: 'llama3.2',
+        model: '', // Will be set on mount
         userName: '',
         date: new Date().toISOString().split('T')[0],
     });
+    const [availableModels, setAvailableModels] = useState<string[]>([]);
     const [result, setResult] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    useEffect(() => {
+        async function fetchModels() {
+            const models = await getAvailableModels();
+            setAvailableModels(models);
+            if (models.length > 0) {
+                // Prefer llama3.2 if available, otherwise first one
+                const defaultModel = models.includes('llama3.2:latest') ? 'llama3.2:latest' : models[0];
+                setFormData(prev => ({ ...prev, model: defaultModel }));
+            }
+        }
+        fetchModels();
+    }, []);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
@@ -34,7 +48,7 @@ export default function CoverLetterForm() {
     const handleGenerate = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.model) {
-            setError('Please specify an Ollama model.');
+            setError('Please select an Ollama model. If none appear, ensure Ollama is running.');
             return;
         }
         setLoading(true);
@@ -90,16 +104,30 @@ export default function CoverLetterForm() {
 
                     <div className="form-group">
                         <label className="label">Ollama Model</label>
-                        <input
-                            className="input"
-                            name="model"
-                            placeholder="e.g. llama3.2, mistral"
-                            value={formData.model}
-                            onChange={handleInputChange}
-                            required
-                        />
+                        {availableModels.length > 0 ? (
+                            <select
+                                className="input"
+                                name="model"
+                                value={formData.model}
+                                onChange={handleInputChange}
+                                required
+                            >
+                                {availableModels.map(model => (
+                                    <option key={model} value={model}>{model}</option>
+                                ))}
+                            </select>
+                        ) : (
+                            <input
+                                className="input"
+                                name="model"
+                                placeholder="Loading models or enter manually..."
+                                value={formData.model}
+                                onChange={handleInputChange}
+                                required
+                            />
+                        )}
                         <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                            Ensure the model is downloaded locally using `ollama pull [model]`.
+                            Showing installed models from your local Ollama instance.
                         </p>
                     </div>
 

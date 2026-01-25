@@ -1,5 +1,15 @@
 import ollama from 'ollama/browser';
 
+export async function getAvailableModels() {
+    try {
+        const response = await ollama.list();
+        return response.models.map(m => m.name);
+    } catch (error) {
+        console.error("Error fetching models:", error);
+        return [];
+    }
+}
+
 export async function generateCoverLetter(promptData: {
     jobDescription: string;
     resumeInfo: string;
