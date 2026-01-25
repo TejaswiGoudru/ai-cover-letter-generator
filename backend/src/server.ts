@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
-import ollama from 'ollama';
+import ollama, { ModelResponse } from 'ollama';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 
@@ -48,7 +48,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 app.get('/api/models', async (req: Request, res: Response) => {
     try {
         const response = await ollama.list();
-        res.json(response.models.map(m => m.name));
+        res.json(response.models.map((m: ModelResponse) => m.name));
     } catch (error) {
         console.error("Error fetching models:", error);
         res.status(500).json({ error: "Failed to fetch models" });
