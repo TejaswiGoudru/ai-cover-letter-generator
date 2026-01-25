@@ -373,7 +373,11 @@ app.post('/api/chat', authenticate as any, async (req: AuthRequest, res: Respons
  */
 app.get('/api/projects', authenticate as any, async (req: AuthRequest, res: Response) => {
     try {
-        const projects = await Project.find({ userId: req.user?.id }).sort({ updatedAt: -1 });
+        const { type } = req.query;
+        const query: any = { userId: req.user?.id };
+        if (type) query.projectType = type;
+
+        const projects = await Project.find(query).sort({ updatedAt: -1 });
         res.json(projects);
     } catch (error) {
         res.status(500).json({ error: "Failed to fetch projects" });
@@ -420,7 +424,7 @@ app.get('/api/projects/:id', authenticate as any, async (req: AuthRequest, res: 
  */
 app.post('/api/projects', authenticate as any, async (req: AuthRequest, res: Response) => {
     try {
-        const { title, companyName, role, jobDescription, resumeInfo, content } = req.body;
+        const { title, companyName, role, jobDescription, resumeInfo, content, projectType, linkedResumeId } = req.body;
         const project = new Project({
             userId: req.user?.id,
             title,
@@ -428,7 +432,9 @@ app.post('/api/projects', authenticate as any, async (req: AuthRequest, res: Res
             role,
             jobDescription,
             resumeInfo,
-            content
+            content,
+            projectType: projectType || 'cover_letter',
+            linkedResumeId: linkedResumeId || null
         });
         await project.save();
         res.status(201).json(project);

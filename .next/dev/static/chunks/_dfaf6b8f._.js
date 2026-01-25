@@ -211,6 +211,9 @@ function CoverLetterForm() {
         date: new Date().toISOString().split('T')[0]
     });
     const [availableModels, setAvailableModels] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]);
+    const [resumes, setResumes] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]);
+    const [selectedResumeId, setSelectedResumeId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])('');
+    const [useStoredResume, setUseStoredResume] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [result, setResult] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])('');
     const [loading, setLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [saving, setSaving] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
@@ -222,7 +225,6 @@ function CoverLetterForm() {
                 const models = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$llm$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getAvailableModels"])();
                 setAvailableModels(models);
                 if (models.length > 0) {
-                    // Prefer llama3.2 if available, otherwise first one
                     const defaultModel = models.includes('llama3.2:latest') ? 'llama3.2:latest' : models[0];
                     setFormData({
                         "CoverLetterForm.useEffect.fetchModels": (prev)=>({
@@ -232,9 +234,41 @@ function CoverLetterForm() {
                     }["CoverLetterForm.useEffect.fetchModels"]);
                 }
             }
+            async function fetchResumes() {
+                if (!token) return;
+                try {
+                    const response = await fetch('http://localhost:4000/api/projects?type=resume', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        setResumes(data);
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch resumes', err);
+                }
+            }
             fetchModels();
+            fetchResumes();
         }
-    }["CoverLetterForm.useEffect"], []);
+    }["CoverLetterForm.useEffect"], [
+        token
+    ]);
+    const handleResumeSelect = (e)=>{
+        const id = e.target.value;
+        setSelectedResumeId(id);
+        const resume = resumes.find((r)=>r._id === id);
+        if (resume) {
+            // Strip HTML for the prompt context
+            const plainContent = resume.content.replace(/<[^>]*>?/gm, '');
+            setFormData((prev)=>({
+                    ...prev,
+                    resumeInfo: plainContent
+                }));
+        }
+    };
     const handleInputChange = (e)=>{
         const { name, value } = e.target;
         setFormData((prev)=>({
@@ -299,6 +333,15 @@ function CoverLetterForm() {
         } finally{
             setSaving(false);
         }
+    };
+    const sectionTitleStyle = {
+        fontSize: '0.9rem',
+        fontWeight: '700',
+        color: '#4b5563',
+        marginBottom: '15px',
+        marginTop: '25px',
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em'
     };
     const quillModules = {
         toolbar: [
@@ -378,7 +421,7 @@ function CoverLetterForm() {
                                 children: "Generator Details"
                             }, void 0, false, {
                                 fileName: "[project]/components/CoverLetterForm.tsx",
-                                lineNumber: 135,
+                                lineNumber: 173,
                                 columnNumber: 25
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -395,13 +438,13 @@ function CoverLetterForm() {
                                 children: "Write Manually"
                             }, void 0, false, {
                                 fileName: "[project]/components/CoverLetterForm.tsx",
-                                lineNumber: 136,
+                                lineNumber: 174,
                                 columnNumber: 25
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/CoverLetterForm.tsx",
-                        lineNumber: 134,
+                        lineNumber: 172,
                         columnNumber: 21
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -412,7 +455,7 @@ function CoverLetterForm() {
                                 children: "Ollama Model"
                             }, void 0, false, {
                                 fileName: "[project]/components/CoverLetterForm.tsx",
-                                lineNumber: 142,
+                                lineNumber: 180,
                                 columnNumber: 25
                             }, this),
                             availableModels.length > 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
@@ -427,12 +470,12 @@ function CoverLetterForm() {
                                         children: model
                                     }, model, false, {
                                         fileName: "[project]/components/CoverLetterForm.tsx",
-                                        lineNumber: 152,
+                                        lineNumber: 190,
                                         columnNumber: 37
                                     }, this))
                             }, void 0, false, {
                                 fileName: "[project]/components/CoverLetterForm.tsx",
-                                lineNumber: 144,
+                                lineNumber: 182,
                                 columnNumber: 29
                             }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                 name: "model",
@@ -443,7 +486,7 @@ function CoverLetterForm() {
                                 className: "jsx-9c088fa609496641" + " " + "input"
                             }, void 0, false, {
                                 fileName: "[project]/components/CoverLetterForm.tsx",
-                                lineNumber: 156,
+                                lineNumber: 194,
                                 columnNumber: 29
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -456,13 +499,13 @@ function CoverLetterForm() {
                                 children: "Showing installed models from your local Ollama instance."
                             }, void 0, false, {
                                 fileName: "[project]/components/CoverLetterForm.tsx",
-                                lineNumber: 165,
+                                lineNumber: 203,
                                 columnNumber: 25
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/CoverLetterForm.tsx",
-                        lineNumber: 141,
+                        lineNumber: 179,
                         columnNumber: 21
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -481,7 +524,7 @@ function CoverLetterForm() {
                                         children: "Your Name"
                                     }, void 0, false, {
                                         fileName: "[project]/components/CoverLetterForm.tsx",
-                                        lineNumber: 172,
+                                        lineNumber: 210,
                                         columnNumber: 29
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -493,13 +536,13 @@ function CoverLetterForm() {
                                         className: "jsx-9c088fa609496641" + " " + "input"
                                     }, void 0, false, {
                                         fileName: "[project]/components/CoverLetterForm.tsx",
-                                        lineNumber: 173,
+                                        lineNumber: 211,
                                         columnNumber: 29
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/CoverLetterForm.tsx",
-                                lineNumber: 171,
+                                lineNumber: 209,
                                 columnNumber: 25
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -510,7 +553,7 @@ function CoverLetterForm() {
                                         children: "Application Date"
                                     }, void 0, false, {
                                         fileName: "[project]/components/CoverLetterForm.tsx",
-                                        lineNumber: 183,
+                                        lineNumber: 221,
                                         columnNumber: 29
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -522,19 +565,19 @@ function CoverLetterForm() {
                                         className: "jsx-9c088fa609496641" + " " + "input"
                                     }, void 0, false, {
                                         fileName: "[project]/components/CoverLetterForm.tsx",
-                                        lineNumber: 184,
+                                        lineNumber: 222,
                                         columnNumber: 29
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/CoverLetterForm.tsx",
-                                lineNumber: 182,
+                                lineNumber: 220,
                                 columnNumber: 25
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/CoverLetterForm.tsx",
-                        lineNumber: 170,
+                        lineNumber: 208,
                         columnNumber: 21
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -553,7 +596,7 @@ function CoverLetterForm() {
                                         children: "Company Name"
                                     }, void 0, false, {
                                         fileName: "[project]/components/CoverLetterForm.tsx",
-                                        lineNumber: 197,
+                                        lineNumber: 235,
                                         columnNumber: 29
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -565,13 +608,13 @@ function CoverLetterForm() {
                                         className: "jsx-9c088fa609496641" + " " + "input"
                                     }, void 0, false, {
                                         fileName: "[project]/components/CoverLetterForm.tsx",
-                                        lineNumber: 198,
+                                        lineNumber: 236,
                                         columnNumber: 29
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/CoverLetterForm.tsx",
-                                lineNumber: 196,
+                                lineNumber: 234,
                                 columnNumber: 25
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -582,7 +625,7 @@ function CoverLetterForm() {
                                         children: "Target Role"
                                     }, void 0, false, {
                                         fileName: "[project]/components/CoverLetterForm.tsx",
-                                        lineNumber: 208,
+                                        lineNumber: 246,
                                         columnNumber: 29
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -594,19 +637,28 @@ function CoverLetterForm() {
                                         className: "jsx-9c088fa609496641" + " " + "input"
                                     }, void 0, false, {
                                         fileName: "[project]/components/CoverLetterForm.tsx",
-                                        lineNumber: 209,
+                                        lineNumber: 247,
                                         columnNumber: 29
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/CoverLetterForm.tsx",
-                                lineNumber: 207,
+                                lineNumber: 245,
                                 columnNumber: 25
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/CoverLetterForm.tsx",
-                        lineNumber: 195,
+                        lineNumber: 233,
+                        columnNumber: 21
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        style: sectionTitleStyle,
+                        className: "jsx-9c088fa609496641",
+                        children: "Application Content"
+                    }, void 0, false, {
+                        fileName: "[project]/components/CoverLetterForm.tsx",
+                        lineNumber: 258,
                         columnNumber: 21
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -617,7 +669,7 @@ function CoverLetterForm() {
                                 children: "Job Description"
                             }, void 0, false, {
                                 fileName: "[project]/components/CoverLetterForm.tsx",
-                                lineNumber: 221,
+                                lineNumber: 261,
                                 columnNumber: 25
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("textarea", {
@@ -629,27 +681,107 @@ function CoverLetterForm() {
                                 className: "jsx-9c088fa609496641" + " " + "textarea"
                             }, void 0, false, {
                                 fileName: "[project]/components/CoverLetterForm.tsx",
-                                lineNumber: 222,
+                                lineNumber: 262,
                                 columnNumber: 25
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/CoverLetterForm.tsx",
-                        lineNumber: 220,
+                        lineNumber: 260,
                         columnNumber: 21
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "jsx-9c088fa609496641" + " " + "form-group",
                         children: [
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                className: "jsx-9c088fa609496641" + " " + "label",
-                                children: "Your Resume / Key Skills"
-                            }, void 0, false, {
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                style: {
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    marginBottom: '8px'
+                                },
+                                className: "jsx-9c088fa609496641",
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                        className: "jsx-9c088fa609496641" + " " + "label",
+                                        children: "Your Resume / Skills"
+                                    }, void 0, false, {
+                                        fileName: "[project]/components/CoverLetterForm.tsx",
+                                        lineNumber: 274,
+                                        columnNumber: 29
+                                    }, this),
+                                    resumes.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        style: {
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px'
+                                        },
+                                        className: "jsx-9c088fa609496641",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                style: {
+                                                    fontSize: '0.75rem',
+                                                    color: '#666'
+                                                },
+                                                className: "jsx-9c088fa609496641",
+                                                children: "Use Saved Resume?"
+                                            }, void 0, false, {
+                                                fileName: "[project]/components/CoverLetterForm.tsx",
+                                                lineNumber: 277,
+                                                columnNumber: 37
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                type: "checkbox",
+                                                checked: useStoredResume,
+                                                onChange: (e)=>setUseStoredResume(e.target.checked),
+                                                className: "jsx-9c088fa609496641"
+                                            }, void 0, false, {
+                                                fileName: "[project]/components/CoverLetterForm.tsx",
+                                                lineNumber: 278,
+                                                columnNumber: 37
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/components/CoverLetterForm.tsx",
+                                        lineNumber: 276,
+                                        columnNumber: 33
+                                    }, this)
+                                ]
+                            }, void 0, true, {
                                 fileName: "[project]/components/CoverLetterForm.tsx",
-                                lineNumber: 233,
+                                lineNumber: 273,
                                 columnNumber: 25
                             }, this),
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("textarea", {
+                            useStoredResume ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
+                                value: selectedResumeId,
+                                onChange: handleResumeSelect,
+                                required: true,
+                                className: "jsx-9c088fa609496641" + " " + "input",
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
+                                        value: "",
+                                        className: "jsx-9c088fa609496641",
+                                        children: "Select a resume..."
+                                    }, void 0, false, {
+                                        fileName: "[project]/components/CoverLetterForm.tsx",
+                                        lineNumber: 294,
+                                        columnNumber: 33
+                                    }, this),
+                                    resumes.map((r)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
+                                            value: r._id,
+                                            className: "jsx-9c088fa609496641",
+                                            children: r.title
+                                        }, r._id, false, {
+                                            fileName: "[project]/components/CoverLetterForm.tsx",
+                                            lineNumber: 296,
+                                            columnNumber: 37
+                                        }, this))
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/components/CoverLetterForm.tsx",
+                                lineNumber: 288,
+                                columnNumber: 29
+                            }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("textarea", {
                                 name: "resumeInfo",
                                 placeholder: "Paste your resume content or key experience here...",
                                 value: formData.resumeInfo,
@@ -658,13 +790,13 @@ function CoverLetterForm() {
                                 className: "jsx-9c088fa609496641" + " " + "textarea"
                             }, void 0, false, {
                                 fileName: "[project]/components/CoverLetterForm.tsx",
-                                lineNumber: 234,
-                                columnNumber: 25
+                                lineNumber: 300,
+                                columnNumber: 29
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/CoverLetterForm.tsx",
-                        lineNumber: 232,
+                        lineNumber: 272,
                         columnNumber: 21
                     }, this),
                     error && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -676,7 +808,7 @@ function CoverLetterForm() {
                         children: error
                     }, void 0, false, {
                         fileName: "[project]/components/CoverLetterForm.tsx",
-                        lineNumber: 244,
+                        lineNumber: 311,
                         columnNumber: 31
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -692,7 +824,7 @@ function CoverLetterForm() {
                                     className: "jsx-9c088fa609496641" + " " + "spin-loader"
                                 }, void 0, false, {
                                     fileName: "[project]/components/CoverLetterForm.tsx",
-                                    lineNumber: 249,
+                                    lineNumber: 316,
                                     columnNumber: 33
                                 }, this),
                                 "Generating..."
@@ -700,13 +832,13 @@ function CoverLetterForm() {
                         }, void 0, true) : 'Generate Cover Letter'
                     }, void 0, false, {
                         fileName: "[project]/components/CoverLetterForm.tsx",
-                        lineNumber: 246,
+                        lineNumber: 313,
                         columnNumber: 21
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/CoverLetterForm.tsx",
-                lineNumber: 133,
+                lineNumber: 171,
                 columnNumber: 17
             }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 style: {
@@ -730,7 +862,7 @@ function CoverLetterForm() {
                                 children: "Your Cover Letter"
                             }, void 0, false, {
                                 fileName: "[project]/components/CoverLetterForm.tsx",
-                                lineNumber: 258,
+                                lineNumber: 325,
                                 columnNumber: 25
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -751,7 +883,7 @@ function CoverLetterForm() {
                                         children: saveMessage
                                     }, void 0, false, {
                                         fileName: "[project]/components/CoverLetterForm.tsx",
-                                        lineNumber: 260,
+                                        lineNumber: 327,
                                         columnNumber: 45
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -769,7 +901,7 @@ function CoverLetterForm() {
                                         children: saving ? 'Saving...' : 'Save as Project'
                                     }, void 0, false, {
                                         fileName: "[project]/components/CoverLetterForm.tsx",
-                                        lineNumber: 261,
+                                        lineNumber: 328,
                                         columnNumber: 29
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -786,7 +918,7 @@ function CoverLetterForm() {
                                         children: "Edit Info"
                                     }, void 0, false, {
                                         fileName: "[project]/components/CoverLetterForm.tsx",
-                                        lineNumber: 264,
+                                        lineNumber: 331,
                                         columnNumber: 29
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -795,19 +927,19 @@ function CoverLetterForm() {
                                         children: "Download PDF"
                                     }, void 0, false, {
                                         fileName: "[project]/components/CoverLetterForm.tsx",
-                                        lineNumber: 265,
+                                        lineNumber: 332,
                                         columnNumber: 29
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/CoverLetterForm.tsx",
-                                lineNumber: 259,
+                                lineNumber: 326,
                                 columnNumber: 25
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/CoverLetterForm.tsx",
-                        lineNumber: 257,
+                        lineNumber: 324,
                         columnNumber: 21
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -829,18 +961,18 @@ function CoverLetterForm() {
                             }
                         }, void 0, false, {
                             fileName: "[project]/components/CoverLetterForm.tsx",
-                            lineNumber: 269,
+                            lineNumber: 336,
                             columnNumber: 25
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/components/CoverLetterForm.tsx",
-                        lineNumber: 268,
+                        lineNumber: 335,
                         columnNumber: 21
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/CoverLetterForm.tsx",
-                lineNumber: 256,
+                lineNumber: 323,
                 columnNumber: 17
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$styled$2d$jsx$2f$style$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -850,11 +982,11 @@ function CoverLetterForm() {
         ]
     }, void 0, true, {
         fileName: "[project]/components/CoverLetterForm.tsx",
-        lineNumber: 131,
+        lineNumber: 169,
         columnNumber: 9
     }, this);
 }
-_s(CoverLetterForm, "h1aQDsrjEcNLQFvgF/l0kg44nT8=", false, function() {
+_s(CoverLetterForm, "RZ2SyD9oJQbDG/PEgiHoja//O20=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$AuthContext$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useAuth"]
     ];

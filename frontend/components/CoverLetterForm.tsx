@@ -26,6 +26,9 @@ export default function CoverLetterForm() {
         date: new Date().toISOString().split('T')[0],
     });
     const [availableModels, setAvailableModels] = useState<string[]>([]);
+    const [resumes, setResumes] = useState<any[]>([]);
+    const [selectedResumeId, setSelectedResumeId] = useState('');
+    const [useStoredResume, setUseStoredResume] = useState(false);
     const [result, setResult] = useState('');
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -37,13 +40,38 @@ export default function CoverLetterForm() {
             const models = await getAvailableModels();
             setAvailableModels(models);
             if (models.length > 0) {
-                // Prefer llama3.2 if available, otherwise first one
                 const defaultModel = models.includes('llama3.2:latest') ? 'llama3.2:latest' : models[0];
                 setFormData(prev => ({ ...prev, model: defaultModel }));
             }
         }
+        async function fetchResumes() {
+            if (!token) return;
+            try {
+                const response = await fetch('http://localhost:4000/api/projects?type=resume', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setResumes(data);
+                }
+            } catch (err) {
+                console.error('Failed to fetch resumes', err);
+            }
+        }
         fetchModels();
-    }, []);
+        fetchResumes();
+    }, [token]);
+
+    const handleResumeSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const id = e.target.value;
+        setSelectedResumeId(id);
+        const resume = resumes.find(r => r._id === id);
+        if (resume) {
+            // Strip HTML for the prompt context
+            const plainContent = resume.content.replace(/<[^>]*>?/gm, '');
+            setFormData(prev => ({ ...prev, resumeInfo: plainContent }));
+        }
+    };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -110,6 +138,16 @@ export default function CoverLetterForm() {
         } finally {
             setSaving(false);
         }
+    };
+
+    const sectionTitleStyle: React.CSSProperties = {
+        fontSize: '0.9rem',
+        fontWeight: '700',
+        color: '#4b5563',
+        marginBottom: '15px',
+        marginTop: '25px',
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em'
     };
 
     const quillModules = {
@@ -217,6 +255,8 @@ export default function CoverLetterForm() {
                         </div>
                     </div>
 
+                    <div style={sectionTitleStyle}>Application Content</div>
+
                     <div className="form-group">
                         <label className="label">Job Description</label>
                         <textarea
@@ -230,15 +270,42 @@ export default function CoverLetterForm() {
                     </div>
 
                     <div className="form-group">
-                        <label className="label">Your Resume / Key Skills</label>
-                        <textarea
-                            className="textarea"
-                            name="resumeInfo"
-                            placeholder="Paste your resume content or key experience here..."
-                            value={formData.resumeInfo}
-                            onChange={handleInputChange}
-                            required
-                        />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <label className="label">Your Resume / Skills</label>
+                            {resumes.length > 0 && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ fontSize: '0.75rem', color: '#666' }}>Use Saved Resume?</span>
+                                    <input
+                                        type="checkbox"
+                                        checked={useStoredResume}
+                                        onChange={(e) => setUseStoredResume(e.target.checked)}
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {useStoredResume ? (
+                            <select
+                                className="input"
+                                value={selectedResumeId}
+                                onChange={handleResumeSelect}
+                                required
+                            >
+                                <option value="">Select a resume...</option>
+                                {resumes.map(r => (
+                                    <option key={r._id} value={r._id}>{r.title}</option>
+                                ))}
+                            </select>
+                        ) : (
+                            <textarea
+                                className="textarea"
+                                name="resumeInfo"
+                                placeholder="Paste your resume content or key experience here..."
+                                value={formData.resumeInfo}
+                                onChange={handleInputChange}
+                                required
+                            />
+                        )}
                     </div>
 
                     {error && <p style={{ color: '#ef4444', marginBottom: '16px' }}>{error}</p>}
