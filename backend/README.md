@@ -22,11 +22,28 @@ This is the backend service for the AI Cover Letter Generator. It provides an Ex
 npm install
 ```
 
+### Configuration
+
+Create a `.env` file or set the following environment variables:
+
+- `MONGODB_URI`: Connection string for MongoDB (default: `mongodb://localhost:27017/ai-cover-letter`)
+- `JWT_SECRET`: Secret key for JWT signing (default: `your_super_secret_key_here`)
+- `PORT`: Server port (default: `4000`)
+
 ## Running the Backend
 
 Follow these steps to get the backend service up and running:
 
-### 1. Ensure Ollama is Running
+### 1. Ensure Dependencies are Running
+The backend depends on Ollama and MongoDB.
+
+- **Ollama**: Ensure it's running (`ollama list`)
+- **MongoDB**: You can start a developer instance using:
+  ```bash
+  docker-compose -f ../docker-compose.mongodb.yml up -d
+  ```
+
+### 2. Ensure Ollama is Running
 The backend depends on Ollama. Open a terminal and verify it's active:
 ```bash
 ollama --version

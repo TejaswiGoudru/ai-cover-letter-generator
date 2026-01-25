@@ -12,7 +12,8 @@ A full-stack application that leverages local LLMs via Ollama to generate profes
 
 - [Node.js](https://nodejs.org/) (v18 or later recommended)
 - [Ollama](https://ollama.com/) (Must be installed and running locally)
-- [Docker](https://www.docker.com/) (Optional, for containerized execution)
+- [MongoDB](https://www.mongodb.com/) (Must be running locally or via Docker)
+- [Docker](https://www.docker.com/) (Recommended for full stack execution)
 
 ## Setup for Development
 
@@ -24,16 +25,34 @@ Ensure Ollama is installed and the desired model (e.g., `llama3.2`) is pulled:
 ollama run llama3.2
 ```
 
-### 2. Backend Setup
+### 2. MongoDB Setup
 
-Navigate to the `backend` directory and install dependencies:
+You can start a standalone MongoDB server for development using Docker:
+
+```bash
+# Start MongoDB in the background
+docker-compose -f docker-compose.mongodb.yml up -d
+```
+
+Alternatively, if you have MongoDB installed locally, ensure it's running on port `27017`.
+
+### 3. Backend Setup
+
+Navigate to the `backend` directory, install dependencies, and set configuration:
 
 ```bash
 cd backend
 npm install
 ```
 
-### 3. Frontend Setup
+> [!TIP]
+> You can create a `.env` file in the `backend` directory to override defaults:
+> ```env
+> MONGODB_URI=mongodb://localhost:27017/ai-cover-letter
+> JWT_SECRET=your_secret_key
+> ```
+
+### 4. Frontend Setup
 
 Navigate to the `frontend` directory and install dependencies:
 

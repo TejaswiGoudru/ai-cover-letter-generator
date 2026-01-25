@@ -3,12 +3,24 @@ import cors from 'cors';
 import ollama, { ModelResponse } from 'ollama';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
+import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
+import User from './models/User';
+import { authenticate, AuthRequest } from './middleware/auth';
+
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ai-cover-letter';
+const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_key_here';
+
+mongoose.connect(MONGODB_URI)
+    .then(() => console.log('Connected to MongoDB'))
+    .catch(err => console.error('MongoDB connection error:', err));
 
 const app = express();
 const port = 4000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 const swaggerOptions = {
     definition: {
@@ -52,6 +64,167 @@ app.get('/api/models', async (req: Request, res: Response) => {
     } catch (error) {
         console.error("Error fetching models:", error);
         res.status(500).json({ error: "Failed to fetch models" });
+    }
+});
+
+/**
+ * @openapi
+ * /api/register:
+ *   post:
+ *     summary: Register a new user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *       400:
+ *         description: Validation error
+ */
+app.post('/api/register', async (req: Request, res: Response) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({ error: "Email and password are required" });
+        }
+
+        const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+        if (!passwordRegex.test(password)) {
+            return res.status(400).json({
+                error: "Password must be at least 8 characters long and contain at least one alphabet, one number, and one special character."
+            });
+        }
+
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ error: "User already exists" });
+        }
+
+        const user = new User({ email, password });
+        await user.save();
+
+        res.status(201).json({ message: "User registered successfully" });
+    } catch (error) {
+        console.error("Registration error:", error);
+        res.status(500).json({ error: "Registration failed" });
+    }
+});
+
+/**
+ * @openapi
+ * /api/login:
+ *   post:
+ *     summary: Login a user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       401:
+ *         description: Invalid credentials
+ */
+app.post('/api/login', async (req: Request, res: Response) => {
+    try {
+        const { email, password } = req.body;
+        const user = await User.findOne({ email });
+
+        if (!user || !await (user as any).comparePassword(password)) {
+            return res.status(401).json({ error: "Invalid email or password" });
+        }
+
+        const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, { expiresIn: '1d' });
+        res.json({ token });
+    } catch (error) {
+        console.error("Login error:", error);
+        res.status(500).json({ error: "Login failed" });
+    }
+});
+
+/**
+ * @openapi
+ * /api/profile:
+ *   get:
+ *     summary: Get user profile
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile data
+ */
+app.get('/api/profile', authenticate as any, async (req: AuthRequest, res: Response) => {
+    try {
+        const user = await User.findById(req.user?.id).select('-password');
+        if (!user) return res.status(404).json({ error: "User not found" });
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch profile" });
+    }
+});
+
+/**
+ * @openapi
+ * /api/profile:
+ *   post:
+ *     summary: Update user profile
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *               middleName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               profileEmail:
+ *                 type: string
+ *               profilePicture:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ */
+app.post('/api/profile', authenticate as any, async (req: AuthRequest, res: Response) => {
+    try {
+        const { firstName, middleName, lastName, profileEmail, profilePicture } = req.body;
+        const user = await User.findByIdAndUpdate(
+            req.user?.id,
+            { firstName, middleName, lastName, profileEmail, profilePicture },
+            { new: true }
+        ).select('-password');
+
+        if (!user) return res.status(404).json({ error: "User not found" });
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to update profile" });
     }
 });
 
