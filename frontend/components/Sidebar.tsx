@@ -13,6 +13,10 @@ const ChatIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
 );
 
+const EditIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+);
+
 const ProfileIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
 );
@@ -41,7 +45,8 @@ export default function Sidebar() {
   if (!token) return null;
 
   const navItems = [
-    { name: 'Generator', href: '/', icon: <HomeIcon /> },
+    { name: 'Dashboard', href: '/', icon: <HomeIcon /> },
+    { name: 'Cover Generator', href: '/cover-generator', icon: <EditIcon /> },
     { name: 'AI Chat', href: '/chat', icon: <ChatIcon /> },
     { name: 'Resume Builder', href: '/resume-builder', icon: <ResumeIcon /> },
     { name: 'My Projects', href: '/projects', icon: <ProjectsIcon /> },
@@ -80,8 +85,8 @@ export default function Sidebar() {
         .sidebar {
           width: 250px;
           height: 100vh;
-          background: #111;
-          color: white;
+          background: #ffffff;
+          color: #1e293b;
           display: flex;
           flex-direction: column;
           position: fixed;
@@ -90,6 +95,7 @@ export default function Sidebar() {
           transition: width 0.3s ease;
           overflow: hidden;
           z-index: 1000;
+          border-right: 1px solid #e2e8f0;
         }
         .sidebar.collapsed {
           width: 80px;
@@ -99,18 +105,18 @@ export default function Sidebar() {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border-bottom: 1px solid #222;
+          border-bottom: 1px solid #f1f5f9;
           height: 72px;
         }
         .sidebar.collapsed .sidebar-header {
           justify-content: center;
           padding: 1rem;
         }
-        h2 { margin: 0; font-size: 1.25rem; color: #0070f3; font-weight: 700; white-space: nowrap; }
+        h2 { margin: 0; font-size: 1.25rem; color: #3b82f6; font-weight: 800; white-space: nowrap; }
         .toggle-btn {
           background: none;
           border: none;
-          color: #666;
+          color: #64748b;
           cursor: pointer;
           padding: 8px;
           border-radius: 6px;
@@ -120,8 +126,8 @@ export default function Sidebar() {
           justify-content: center;
         }
         .toggle-btn:hover {
-          background: #222;
-          color: white;
+          background: #f8fafc;
+          color: #3b82f6;
         }
         .sidebar-nav {
           flex: 1;
@@ -131,39 +137,42 @@ export default function Sidebar() {
           display: flex;
           align-items: center;
           padding: 0.8rem 1.5rem;
-          color: #999;
+          color: #64748b;
           text-decoration: none;
           transition: all 0.2s;
           gap: 1rem;
+          font-weight: 600;
         }
         .sidebar.collapsed .nav-item {
           justify-content: center;
           padding: 1rem;
         }
         .nav-item:hover {
-          background: #222;
-          color: white;
+          background: #f1f5f9;
+          color: #3b82f6;
         }
         .nav-item.active {
-          background: #0070f31a;
-          color: #0070f3;
-          border-right: 3px solid #0070f3;
+          background: #eff6ff;
+          color: #3b82f6;
+          border-right: 3px solid #3b82f6;
         }
         .icon {
           display: flex;
           align-items: center;
           justify-content: center;
           min-width: 24px;
+          opacity: 0.8;
         }
+        .active .icon { opacity: 1; }
         .label {
-          font-weight: 500;
+          font-weight: 600;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
         .sidebar-footer {
           padding: 1.5rem;
-          border-top: 1px solid #222;
+          border-top: 1px solid #f1f5f9;
         }
         .sidebar.collapsed .sidebar-footer {
           padding: 1rem;
@@ -176,12 +185,13 @@ export default function Sidebar() {
           align-items: center;
           gap: 1rem;
           padding: 0.8rem 1.2rem;
-          background: #1a1a1a;
-          color: #ff4d4d;
-          border: 1px solid #333;
+          background: #fef2f2;
+          color: #ef4444;
+          border: 1px solid #fee2e2;
           border-radius: 8px;
           cursor: pointer;
           transition: all 0.2s;
+          font-weight: 700;
         }
         .sidebar.collapsed .logout-button {
           width: 48px;
@@ -189,8 +199,8 @@ export default function Sidebar() {
           justify-content: center;
         }
         .logout-button:hover {
-          background: #ff4d4d1a;
-          border-color: #ff4d4d;
+          background: #fee2e2;
+          border-color: #fecaca;
         }
       `}</style>
     </div>
